@@ -1,19 +1,24 @@
+-- ==========================================
+-- SCHEMA CREATION
+-- ==========================================
+
 CREATE SCHEMA farm;
 GO
 CREATE SCHEMA MLP;
 GO
 
+-- 1. Products
 CREATE TABLE farm.products (
     id_products         INT           IDENTITY(1, 1) PRIMARY KEY,
-    name_products       VARCHAR(50)   NOT NULL,
-    variety             VARCHAR(50)   NULL,
-    type_product        VARCHAR(50)   NOT NULL,
+    name_products       NVARCHAR(50)  NOT NULL,
+    variety             NVARCHAR(50)  NULL,
+    type_product        NVARCHAR(50)  NOT NULL,
     shelf_life_days     SMALLINT      NOT NULL,
     retail_price        DECIMAL(12,2) NULL,
-    base_unit           VARCHAR(20)   NOT NULL,
+    base_unit           NVARCHAR(20)  NOT NULL,
     storage_temp_min    DECIMAL(5,2)  NOT NULL,
     storage_temp_max    DECIMAL(5,2)  NOT NULL,
-    storage_conditions  VARCHAR(100)  NULL,
+    storage_conditions  NVARCHAR(100) NULL,
 
     CONSTRAINT UQ_products_name_variety UNIQUE (name_products, variety),
     CONSTRAINT CK_products_min_max CHECK (storage_temp_min <= storage_temp_max),
@@ -21,35 +26,52 @@ CREATE TABLE farm.products (
     CONSTRAINT CK_products_retail_price CHECK (retail_price >= 0)
 );
 
+-- 2. Locations (Where employees live/work)
 CREATE TABLE MLP.locations (
     id_location    INT          IDENTITY(1, 1) PRIMARY KEY,
     name_location  NVARCHAR(50) NOT NULL,
     city_location  NVARCHAR(50) NOT NULL
 );
 
+-- 3. Movement Types (Receipt, Issue, etc.)
 CREATE TABLE farm.movement_types (
     id_movement_type    INT          IDENTITY(1, 1) PRIMARY KEY,
     name_movement_type  NVARCHAR(50) NOT NULL UNIQUE,
-    coefficient          SMALLINT     NOT NULL CHECK (coefficient IN (-1, 1))
+    coefficient         SMALLINT     NOT NULL CHECK (coefficient IN (-1, 1))
 );
 
+-- 4. Employees
 CREATE TABLE MLP.employees (
     id_employee          INT          IDENTITY(1, 1) PRIMARY KEY,
     name_employee        NVARCHAR(50) NOT NULL,
     role_employee        NVARCHAR(50) NOT NULL,
     id_location_employee INT, 
-    is_active            BIT NOT NULL DEFAULT 1,
+    is_active            BIT          NOT NULL DEFAULT 1,
+    
     CONSTRAINT FK_employees_locations
-    FOREIGN KEY (id_location_employee)
+        FOREIGN KEY (id_location_employee)
         REFERENCES MLP.locations (id_location)
 );
 
+-- 5. Storage Places (Internal barns/shelves)
 CREATE TABLE farm.storage_places (
     storage_place_id  INT         IDENTITY(1, 1) PRIMARY KEY,
-    place_name        VARCHAR(50) NOT NULL UNIQUE,
+    place_name        NVARCHAR(50) NOT NULL UNIQUE, -- Changed to NVARCHAR for safety
     capacity_kg       SMALLINT    NOT NULL CHECK (capacity_kg > 0)
 );
 
+-- 6. Supply Locations (External suppliers)
+CREATE TABLE farm.supply_locations (
+    id_supply_location INT IDENTITY(1,1) PRIMARY KEY,
+    name               NVARCHAR(100) NOT NULL,
+    location_type      NVARCHAR(50)  NOT NULL, -- 'Orchard', 'Farm', 'Ranch', 'Windmill', 'Importer'
+    city               NVARCHAR(50)  NULL,
+    region             NVARCHAR(50)  NULL,
+    description        NVARCHAR(255) NULL,
+    is_active          BIT NOT NULL DEFAULT 1
+);
+
+-- 7. Stock Movements (Main Fact Table)
 CREATE TABLE farm.stock_movements (
     id_movement        INT           IDENTITY(1, 1) PRIMARY KEY,
     date_move          DATETIME2     NOT NULL DEFAULT (SYSDATETIME()),
@@ -57,7 +79,7 @@ CREATE TABLE farm.stock_movements (
     quantity           DECIMAL(12,3) NOT NULL,
     id_employee        INT           NOT NULL,
     storage_place_id   INT           NOT NULL,
-    id_location        INT           NULL,
+    id_supply_location INT           NULL, -- Links to the new supply_locations table
     id_movement_type   INT           NOT NULL,
 
     CONSTRAINT CK_stock_movements_quantity CHECK (quantity > 0),
@@ -74,11 +96,12 @@ CREATE TABLE farm.stock_movements (
         FOREIGN KEY (storage_place_id)
         REFERENCES farm.storage_places (storage_place_id),
 
-    CONSTRAINT FK_stock_movements_locations
-        FOREIGN KEY (id_location)
-        REFERENCES MLP.locations (id_location),
+    -- Updated Foreign Key to point to supply_locations
+    CONSTRAINT FK_stock_movements_supply_locations
+        FOREIGN KEY (id_supply_location)
+        REFERENCES farm.supply_locations (id_supply_location),
 
     CONSTRAINT FK_stock_movements_type
-    FOREIGN KEY (id_movement_type)
+        FOREIGN KEY (id_movement_type)
         REFERENCES farm.movement_types (id_movement_type)
 );

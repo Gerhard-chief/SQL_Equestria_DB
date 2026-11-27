@@ -182,3 +182,69 @@ INSERT INTO farm.products (
     (N'Cherry', N'Bing', N'Fruit', 7, 5.00, N'kg', 0.0, 2.0, N'Keep refrigerated, do not wash before storing'),
     (N'Cherry', N'Rainier', N'Fruit', 5, 7.00, N'kg', 0.0, 2.0, N'Premium variety, keep refrigerated'),
     (N'Strawberry', NULL, N'Berry', 3, 6.00, N'kg', 0.0, 2.0, N'Keep refrigerated, consume quickly');
+
+
+
+-- ==========================================
+-- STOCK MOVEMENTS (Simulating 2025)
+-- ==========================================
+-- Note: 
+-- 1 = Receipt (Income)
+-- 2 = Issue (Outcome/Sale/Spoilage)
+-- id_supply_location can be NULL for Issues (goods leaving the farm).
+
+INSERT INTO farm.stock_movements (date_move, id_products, quantity, id_employee, storage_place_id, id_movement_type, id_supply_location)
+VALUES
+    -- 🌱 SPRING
+    -- Receipt: 100kg Strawberries from Carrot Farm (Wait, Carrot Farm? Let's assume they grow berries too, or use Hearthlands)
+    ('2025-03-15T10:00:00', 46, 100, 2, 2, 1, 7), 
+    -- Issue: 10kg Strawberries spoiled (Spoilage)
+    ('2025-03-20T14:30:00', 46, 10, 2, 4, 2, NULL), 
+    -- Receipt: 200 pieces of Lettuce from Hearthlands
+    ('2025-04-10T09:00:00', 20, 200, 2, 2, 1, 7),
+
+    -- ☀️ SUMMER
+    -- Receipt: 150kg Cherries from Cherry Hill Ranch
+    ('2025-06-01T08:00:00', 44, 150, 19, 2, 1, 3), 
+    -- Receipt: 300 pieces of Corn from Sweet Apple Acres
+    ('2025-07-15T11:00:00', 36, 300, 2, 1, 1, 1), 
+    -- Issue: 50kg Cherries sold to Ponyville Market (id_supply_location is NULL)
+    ('2025-06-05T12:00:00', 44, 50, 2, 1, 2, NULL),
+    -- Receipt: 80kg Tomatoes from Hooffield Farms
+    ('2025-08-01T09:30:00', 23, 80, 21, 1, 1, 5),
+
+    -- 🍎 AUTUMN (Harvest Season)
+    -- Receipt: 500kg Apples (Gala) from Sweet Apple Acres
+    ('2025-09-01T08:00:00', 4, 500, 2, 1, 1, 1), 
+    -- Receipt: 400kg Apples (Granny Smith) from Sweet Apple Acres
+    ('2025-09-02T09:00:00', 1, 400, 2, 1, 1, 1),
+    -- Receipt: 200kg Pumpkins from Sweet Apple Acres
+    ('2025-10-15T10:00:00', 40, 200, 2, 3, 1, 1),
+    -- Issue: 100kg Apples sold for Harvest Festival
+    ('2025-10-20T15:00:00', 4, 100, 2, 1, 2, NULL),
+    -- Receipt: 300kg Cabbage (White) from Hooffield Farms
+    ('2025-11-01T09:00:00', 26, 300, 21, 1, 1, 5),
+
+    -- ❄️ WINTER
+    -- Receipt: 50kg Oranges from Zecora's Hut
+    ('2025-12-05T13:00:00', 43, 50, 18, 2, 1, 9),
+    -- Issue: 200kg Apples sold for Hearth's Warming
+    ('2025-12-20T10:00:00', 1, 200, 2, 1, 2, NULL),
+    -- Issue: 150kg Potatoes sold for Hearth's Warming
+    ('2025-12-22T11:00:00', 11, 150, 2, 4, 2, NULL),
+
+    -- 🔄 INTERNAL TRANSFERS (Receipt to different barn)
+    -- Issue: Move 100kg Gala Apples from Main Barn to Cold Cellar
+    ('2025-09-10T09:00:00', 4, 100, 2, 1, 2, NULL),
+    -- Receipt: Receive 100kg Gala Apples into Cold Cellar (id_supply_location = NULL because it's internal)
+    ('2025-09-10T09:05:00', 4, 100, 2, 2, 1, NULL),
+
+    -- 📉 SPOILAGE / QUARANTINE
+    -- Issue: 20kg Tomatoes spoiled and moved to Quarantine
+    ('2025-08-15T16:00:00', 23, 20, 2, 4, 2, NULL),
+    
+    -- 🌟 EXTRA DATA FOR ZECORA
+    -- Receipt: 30kg Blood Oranges from Zecora
+    ('2025-12-10T14:00:00', 44, 30, 18, 2, 1, 9),
+    -- Issue: 10kg Blood Oranges sold as premium goods
+    ('2025-12-15T12:00:00', 44, 10, 2, 2, 2, NULL);
